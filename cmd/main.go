@@ -5,6 +5,7 @@ import (
 	pb "auth-service/generated/auth_service"
 	"auth-service/service"
 	"auth-service/storage/postgres"
+	"fmt"
 	"log"
 	"net"
 
@@ -18,8 +19,8 @@ func main() {
 	}
 	defer db.Close()
 
-	cfg := config.Config{}
-
+	cfg := config.Load()
+	fmt.Println(cfg.GRPC_PORT)
 	listener, err := net.Listen("tcp", cfg.GRPC_PORT)
 	if err != nil {
 		log.Fatal(err)
