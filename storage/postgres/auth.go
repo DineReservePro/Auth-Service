@@ -9,7 +9,7 @@ type UserRepo struct {
 	DB *sql.DB
 }
 
-func NewUserRepo (db *sql.DB) *UserRepo {
+func NewUserRepo(db *sql.DB) *UserRepo {
 	return &UserRepo{DB: db}
 }
 
@@ -21,7 +21,7 @@ func (u *UserRepo) Register(user *pb.RegisterRequest) (*pb.RegisterResponse, err
 			password,
 			email
 		)
-		VAULUES (
+		VALUES (
 			$1,
 			$2,
 			$3
@@ -33,19 +33,19 @@ func (u *UserRepo) Register(user *pb.RegisterRequest) (*pb.RegisterResponse, err
 	if err != nil {
 		return &pb.RegisterResponse{
 			Message: "Failed to create user",
-			UserId: "",
+			UserId:  "",
 		}, nil
 	}
 
 	return &pb.RegisterResponse{
 		Message: "User created successfully",
-		UserId: userId,
+		UserId:  userId,
 	}, nil
 }
 
 func (u *UserRepo) Login(login *pb.LoginRequest) (*pb.LoginResponse, error) {
 	var user pb.LoginResponse
-	
+
 	err := u.DB.QueryRow(`
 		SELECT
 			id,
@@ -65,7 +65,7 @@ func (u *UserRepo) LogoutUser(id string) (*pb.LogoutResponse, error) {
 		UPDATE 
 			users 
 		SET
-			deleted = DATE_PART('epoch', CURRENT_TIMESTAMP)::INT
+			deleted_at = DATE_PART('epoch', CURRENT_TIMESTAMP)::INT
 		WHERE
 			deleted_at = 0 and id = $1
 	`, id)
@@ -73,7 +73,7 @@ func (u *UserRepo) LogoutUser(id string) (*pb.LogoutResponse, error) {
 	if err != nil {
 		return &pb.LogoutResponse{
 			Message: "Faild to deleted user",
-		}, nil
+		}, err
 	}
 
 	return &pb.LogoutResponse{
@@ -81,7 +81,7 @@ func (u *UserRepo) LogoutUser(id string) (*pb.LogoutResponse, error) {
 	}, nil
 }
 
-func (u *UserRepo) CreateProfile(profile *pb.UpdateUserProfileRequest) (error) {
+func (u *UserRepo) CreateProfile(profile *pb.UpdateUserProfileRequest) error {
 	_, err := u.DB.Exec(`
 		INSERT INTO user_profiles (
 			user_id,
@@ -105,7 +105,7 @@ func (u *UserRepo) CreateProfile(profile *pb.UpdateUserProfileRequest) (error) {
 }
 
 func (u *UserRepo) GetUserProfile(username string) (*pb.GetUserProfileResponse, error) {
-	var userProfile pb.GetUserProfileResponse 
+	var userProfile pb.GetUserProfileResponse
 	err := u.DB.QueryRow(`
 		SELECT
 			fullname,
@@ -128,14 +128,14 @@ func (u *UserRepo) UpdateUserProfile(profile *pb.UpdateUserProfileRequest) (*pb.
 			user_profiles
 		SET
 			fullname = $1,
-			username = $2
+			username = $2,
 			date_of_birth = $3,
 			phone_number = $4,
 			address = $5,
 			updated_at = CURRENT_TIMESTAMP
 		WHERE
 			user_id = $6
-	`, profile.FullName, profile.DateOfBirth, profile.PhoneNumber, profile.Address, profile.UserId)
+	`, profile.FullName, profile.Username, profile.DateOfBirth, profile.PhoneNumber, profile.Address, profile.UserId)
 
 	if err != nil {
 		return &pb.UpdateUserProfileResponse{
