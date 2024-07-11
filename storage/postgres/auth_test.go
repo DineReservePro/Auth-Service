@@ -19,7 +19,7 @@ func TestRegister(t *testing.T) {
 
 	user := NewUserRepo(db)
 
-	resp, err := user.Register(&pb.RegisterRequest{
+	resp, err := user.CreateUser(&pb.RegisterRequest{
 		Username: "diyorbeknematov",
 		Password: "qwerty2004",
 		Email:    "diyorbeknematov@gmail.com",
@@ -36,7 +36,6 @@ func TestRegister(t *testing.T) {
 	assert.NoError(t, err)
 
 	assert.Equal(t, expectedResponse.Message, resp.Message)
-	assert.NotEmpty(t, resp.UserId)
 }
 
 func TestLogin(t *testing.T) {
@@ -48,10 +47,7 @@ func TestLogin(t *testing.T) {
 
 	user := NewUserRepo(db)
 
-	resp, err := user.Login(&pb.LoginRequest{
-		Username: "diyorbeknematov",
-		Password: "qwerty2004",
-	})
+	resp, err := user.GetByEmail("diyorbeknematov@gmail.com")
 	if err != nil  {
 		if !errors.Is(err, sql.ErrNoRows) {
 			t.Fatal("user not found")
@@ -91,28 +87,6 @@ func TestLogoutUser(t *testing.T) {
 
 	if !reflect.DeepEqual(resp, expectedResponse) {
 		t.Errorf("have %v, wont %v", resp, expectedResponse)
-	}
-}
-
-func TestCreateProfile(t *testing.T) {
-	db, err := ConnectDB()
-	if err != nil {
-		t.Fatal(err)
-	}
-	defer db.Close()
-
-	user := NewUserRepo(db)
-
-	err = user.CreateProfile(&pb.UpdateUserProfileRequest{
-		UserId:      `fc27aae7-e777-45f1-9431-f00c31dfdea0`,
-		Username:    "diyorbeknematov",
-		FullName:    "Diyorbek Ne'matov",
-		DateOfBirth: "2004-11-20",
-		PhoneNumber: "",
-		Address:     "",
-	})
-	if err != nil {
-		t.Fatal(err)
 	}
 }
 

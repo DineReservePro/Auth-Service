@@ -3,6 +3,7 @@ package postgres
 import (
 	pb "auth-service/generated/auth_service"
 	"database/sql"
+	"fmt"
 )
 
 type UserRepo struct {
@@ -13,9 +14,14 @@ func NewUserRepo(db *sql.DB) *UserRepo {
 	return &UserRepo{DB: db}
 }
 
-func (u *UserRepo) Register(user *pb.RegisterRequest) (*pb.RegisterResponse, error) {
+func (u *UserRepo) CreateUser(user *pb.RegisterRequest) (*pb.RegisterResponse, error) {
+	tx, err := u.DB.Begin()
+	if err != nil {
+		return nil, err
+	}
+	defer tx.Commit()
 	var userId string
-	err := u.DB.QueryRow(`
+	err = tx.QueryRow(`
 		INSERT INTO users (
 			username,
 			password,
@@ -33,29 +39,48 @@ func (u *UserRepo) Register(user *pb.RegisterRequest) (*pb.RegisterResponse, err
 	if err != nil {
 		return &pb.RegisterResponse{
 			Message: "Failed to create user",
-			UserId:  "",
-		}, nil
+		}, err
+	}
+
+	_, err = tx.Exec(`
+		INSERT INTO user_profiles (
+			user_id,
+			username,
+			fullname
+		) 
+		VALUES (
+			$1,
+			$2,
+			$3
+		)
+	`, userId, user.Username, user.FullName)
+
+	if err != nil {
+		return &pb.RegisterResponse{
+			Message: "Failed to create user",
+		}, err
 	}
 
 	return &pb.RegisterResponse{
 		Message: "User created successfully",
-		UserId:  userId,
+		UserId: userId,
 	}, nil
 }
 
-func (u *UserRepo) Login(login *pb.LoginRequest) (*pb.LoginResponse, error) {
+func (u *UserRepo) GetByEmail(email string) (*pb.LoginResponse, error) {
 	var user pb.LoginResponse
-
+	fmt.Println(email)
 	err := u.DB.QueryRow(`
 		SELECT
 			id,
 			username,
-			email
+			email,
+			password
 		FROM
 			users
 		WHERE
-			username = $1 and password = $2 and deleted_at = 0
-	`, login.Username, login.Password).Scan(&user.UserId, &user.Username, &user.Email)
+			email = $1
+	`, email).Scan(&user.UserId, &user.Username, &user.Email, &user.Password)
 
 	return &user, err
 }
@@ -79,29 +104,6 @@ func (u *UserRepo) LogoutUser(id string) (*pb.LogoutResponse, error) {
 	return &pb.LogoutResponse{
 		Message: "user deleted successully",
 	}, nil
-}
-
-func (u *UserRepo) CreateProfile(profile *pb.UpdateUserProfileRequest) error {
-	_, err := u.DB.Exec(`
-		INSERT INTO user_profiles (
-			user_id,
-			username,
-			fullname,
-			date_of_birth,
-			phone_number,
-			address
-		) 
-		VALUES (
-			$1,
-			$2,
-			$3,
-			$4,
-			$5,
-			$6
-		)
-	`, profile.UserId, profile.Username, profile.FullName, profile.DateOfBirth, profile.PhoneNumber, profile.Address)
-
-	return err
 }
 
 func (u *UserRepo) GetUserProfile(username string) (*pb.GetUserProfileResponse, error) {
@@ -146,4 +148,22 @@ func (u *UserRepo) UpdateUserProfile(profile *pb.UpdateUserProfileRequest) (*pb.
 	return &pb.UpdateUserProfileResponse{
 		Message: "User updated successfully",
 	}, nil
+}
+
+func (u *UserRepo) EmailExists(email string) (bool, error) {
+	var exists bool
+
+	err := u.DB.QueryRow(`
+		SELECT
+			EXISTS (
+				SELECT
+					1
+				FROM
+					users
+				WHERE
+					email = $1
+			)	
+	`, email).Scan(exists)
+
+	return exists, err
 }

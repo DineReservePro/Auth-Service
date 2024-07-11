@@ -34,7 +34,7 @@ type ReservationServiceClient interface {
 	DeleteReservation(ctx context.Context, in *DeleteReservationRequest, opts ...grpc.CallOption) (*DeleteReservationResponse, error)
 	CheckReservation(ctx context.Context, in *CheckReservationRequest, opts ...grpc.CallOption) (*CheckReservationResponse, error)
 	OrderMeals(ctx context.Context, in *OrderMealsRequest, opts ...grpc.CallOption) (*OrderMealsResponse, error)
-	PayReservation(ctx context.Context, in *PayReservationRequest, opts ...grpc.CallOption) (*PayReservationResponse, error)
+	PayReservation(ctx context.Context, in *MakePaymentRequest, opts ...grpc.CallOption) (*MakePaymentResponse, error)
 	CreateMenuItem(ctx context.Context, in *CreateMenuItemRequest, opts ...grpc.CallOption) (*CreateMenuItemResponse, error)
 	ListMenuItems(ctx context.Context, in *ListMenuItemsRequest, opts ...grpc.CallOption) (*ListMenuItemsResponse, error)
 	GetMenuItem(ctx context.Context, in *GetMenuItemRequest, opts ...grpc.CallOption) (*GetMenuItemResponse, error)
@@ -158,8 +158,8 @@ func (c *reservationServiceClient) OrderMeals(ctx context.Context, in *OrderMeal
 	return out, nil
 }
 
-func (c *reservationServiceClient) PayReservation(ctx context.Context, in *PayReservationRequest, opts ...grpc.CallOption) (*PayReservationResponse, error) {
-	out := new(PayReservationResponse)
+func (c *reservationServiceClient) PayReservation(ctx context.Context, in *MakePaymentRequest, opts ...grpc.CallOption) (*MakePaymentResponse, error) {
+	out := new(MakePaymentResponse)
 	err := c.cc.Invoke(ctx, "/reservation_service.ReservationService/PayReservation", in, out, opts...)
 	if err != nil {
 		return nil, err
@@ -228,7 +228,7 @@ type ReservationServiceServer interface {
 	DeleteReservation(context.Context, *DeleteReservationRequest) (*DeleteReservationResponse, error)
 	CheckReservation(context.Context, *CheckReservationRequest) (*CheckReservationResponse, error)
 	OrderMeals(context.Context, *OrderMealsRequest) (*OrderMealsResponse, error)
-	PayReservation(context.Context, *PayReservationRequest) (*PayReservationResponse, error)
+	PayReservation(context.Context, *MakePaymentRequest) (*MakePaymentResponse, error)
 	CreateMenuItem(context.Context, *CreateMenuItemRequest) (*CreateMenuItemResponse, error)
 	ListMenuItems(context.Context, *ListMenuItemsRequest) (*ListMenuItemsResponse, error)
 	GetMenuItem(context.Context, *GetMenuItemRequest) (*GetMenuItemResponse, error)
@@ -277,7 +277,7 @@ func (UnimplementedReservationServiceServer) CheckReservation(context.Context, *
 func (UnimplementedReservationServiceServer) OrderMeals(context.Context, *OrderMealsRequest) (*OrderMealsResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method OrderMeals not implemented")
 }
-func (UnimplementedReservationServiceServer) PayReservation(context.Context, *PayReservationRequest) (*PayReservationResponse, error) {
+func (UnimplementedReservationServiceServer) PayReservation(context.Context, *MakePaymentRequest) (*MakePaymentResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method PayReservation not implemented")
 }
 func (UnimplementedReservationServiceServer) CreateMenuItem(context.Context, *CreateMenuItemRequest) (*CreateMenuItemResponse, error) {
@@ -525,7 +525,7 @@ func _ReservationService_OrderMeals_Handler(srv interface{}, ctx context.Context
 }
 
 func _ReservationService_PayReservation_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(PayReservationRequest)
+	in := new(MakePaymentRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
@@ -537,7 +537,7 @@ func _ReservationService_PayReservation_Handler(srv interface{}, ctx context.Con
 		FullMethod: "/reservation_service.ReservationService/PayReservation",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(ReservationServiceServer).PayReservation(ctx, req.(*PayReservationRequest))
+		return srv.(ReservationServiceServer).PayReservation(ctx, req.(*MakePaymentRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }

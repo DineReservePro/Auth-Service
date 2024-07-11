@@ -11,43 +11,8 @@ type AuthService struct {
 	User *postgres.UserRepo
 }
 
-func NewAuthService (user *postgres.UserRepo) *AuthService {
+func NewAuthService(user *postgres.UserRepo) *AuthService {
 	return &AuthService{User: user}
-}
-
-func (a *AuthService) RegisterUser(ctx context.Context, in *pb.RegisterRequest) (*pb.RegisterResponse, error) {
-	resp, err := a.User.Register(in)
-	if err != nil {
-		return &pb.RegisterResponse{
-			Message: resp.Message,
-		}, err
-	}
-
-	err = a.User.CreateProfile(&pb.UpdateUserProfileRequest{
-		UserId: resp.UserId,
-		Username: in.Username,
-		FullName: in.FullName,
-	})
-
-	if err != nil {
-		return &pb.RegisterResponse{
-			Message: "Faild to created user",
-		}, err
-	}
-
-	return &pb.RegisterResponse{
-		Message: resp.Message,
-		UserId: resp.UserId,
-	}, nil
-}
-
-func (a *AuthService) Login(ctx context.Context, in *pb.LoginRequest) (*pb.LoginResponse, error) {
-	resp, err := a.User.Login(in)
-	if err != nil {
-		return nil, err
-	}
-
-	return resp, nil
 }
 
 func (a *AuthService) GetUserProfile(ctx context.Context, in *pb.GetUserProfileRequest) (*pb.GetUserProfileResponse, error) {

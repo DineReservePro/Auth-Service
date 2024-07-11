@@ -1,15 +1,13 @@
 package main
 
 import (
+	"auth-service/api"
+	"auth-service/api/handler"
 	"auth-service/config"
-	pb "auth-service/generated/auth_service"
-	"auth-service/service"
+	"auth-service/server"
 	"auth-service/storage/postgres"
-	"fmt"
 	"log"
-	"net"
-
-	"google.golang.org/grpc"
+	"sync"
 )
 
 func main() {
@@ -20,19 +18,20 @@ func main() {
 	defer db.Close()
 
 	cfg := config.Load()
-	fmt.Println(cfg.GRPC_PORT)
-	listener, err := net.Listen("tcp", cfg.GRPC_PORT)
-	if err != nil {
-		log.Fatal(err)
-	}
+	router := api.Routes(handler.NewHandler(db))
 
-	s := grpc.NewServer()
-	service := service.NewAuthService(postgres.NewUserRepo(db))
+	var wg sync.WaitGroup
+	wg.Add(2)
 
-	pb.RegisterAuthServiceServer(s, service)
+	go func() {
+		defer wg.Done()
+		server.ServerRun(db)
+	}()
 
-	log.Printf("server is running on %v...", listener.Addr())
-	if err := s.Serve(listener); err != nil {
-		log.Fatal(err)
-	}
+	go func() {
+		defer wg.Done()
+		log.Fatal(router.Run(cfg.HTTP_PORT))
+	}()
+
+	wg.Wait()
 }
