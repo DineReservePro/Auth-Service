@@ -3,6 +3,7 @@ package api
 import (
 	_ "auth-service/api/docs"
 	"auth-service/api/handler"
+	"auth-service/api/middleware"
 
 	swaggerFiles "github.com/swaggo/files"
 	ginSwagger "github.com/swaggo/gin-swagger"
@@ -23,6 +24,8 @@ func Routes(handle *handler.Handler) *gin.Engine {
 
 	// Swagger endpointini sozlash
 	router.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
+
+	router.Use(middleware.LoggerMiddleware())
 
 	router.POST("auth/register", handle.RegisterHandler)
 	router.POST("auth/login", handle.LoginHandler)

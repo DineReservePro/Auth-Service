@@ -2,6 +2,8 @@ package middleware
 
 import (
 	"auth-service/auth/token"
+	"auth-service/logs"
+	"log/slog"
 	"net/http"
 	"time"
 
@@ -35,5 +37,20 @@ func AuthMiddleware() gin.HandlerFunc {
 		c.Set("user_email", claims.Email)
 
 		c.Next()
+	}
+}
+
+func LoggerMiddleware() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		logs.Logger.Info("Request received",
+			slog.String("method", c.Request.Method),
+			slog.String("path", c.Request.URL.Path),
+		)
+
+		c.Next()
+
+		logs.Logger.Info("Response sent",
+			slog.Int("status", c.Writer.Status()),
+		)
 	}
 }
