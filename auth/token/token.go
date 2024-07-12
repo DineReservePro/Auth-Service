@@ -1,15 +1,12 @@
 package token
 
 import (
+	"auth-service/config"
 	pb "auth-service/generated/auth_service"
 	"errors"
 	"time"
 
 	"github.com/dgrijalva/jwt-go"
-)
-
-const (
-	signingKey = "access-token"
 )
 
 type Claims struct {
@@ -20,6 +17,7 @@ type Claims struct {
 }
 
 func GenerateAccessJWT(user *pb.LoginResponse) (string, error) {
+	cfg := config.Load()
 	claims := &Claims{
 		UserId:   user.UserId,
 		Username: user.Username,
@@ -31,10 +29,11 @@ func GenerateAccessJWT(user *pb.LoginResponse) (string, error) {
 	}
 	accessToken := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 
-	return accessToken.SignedString([]byte(signingKey))
+	return accessToken.SignedString([]byte(cfg.ACCESS_TOKEN))
 }
 
 func GenerateRefreshJWT(user *pb.LoginResponse) (string, error) {
+	cfg := config.Load()
 	claims := &Claims{
 		UserId:   user.UserId,
 		Username: user.Username,
@@ -46,14 +45,15 @@ func GenerateRefreshJWT(user *pb.LoginResponse) (string, error) {
 	}
 	accessToken := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 
-	return accessToken.SignedString([]byte(signingKey))
+	return accessToken.SignedString([]byte(cfg.REFRESH_TOKEN))
 }
 
 func ExtractClaim(tokenString string) (*Claims, error) {
+	cfg := config.Load()
 	claims := &Claims{}
 
 	token, err := jwt.ParseWithClaims(tokenString, claims, func(token *jwt.Token) (interface{}, error) {
-		return []byte(signingKey), nil
+		return []byte(cfg.REFRESH_TOKEN), nil
 	})
 
 	if err != nil {
